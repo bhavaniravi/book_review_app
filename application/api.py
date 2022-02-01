@@ -56,7 +56,7 @@ def home():
 # | delete author  | Author | DELETE | /author/id | 200 | 400 |
 # | delete notes   | Notes  | DELETE | /book/id/notes/id | 200 | 400 |
 
-
+@jwt_required()
 @app.route("/book", methods=["POST"])
 def add_book():
     # name, author, pages
@@ -83,6 +83,8 @@ def add_book():
             "author": [author.id for author in book.author], 
             "category": [category.id for category in book.category]}
 
+
+@jwt_required()
 @app.route("/book/<int:id>", methods=["PUT"])
 def update_book(id):
     """
@@ -97,6 +99,7 @@ def update_book(id):
     db.session.commit()
     return {"Status": "Success", "message": "Book updated"}
 
+@jwt_required()
 @app.route("/book/<int:id>",  methods=["DELETE"])
 def delete_book(id):
     book = Book.query.get(id)
@@ -104,6 +107,7 @@ def delete_book(id):
     db.session.commit()
     return {"Status": "Success", "message": "Book deleted"}
 
+@jwt_required()
 @app.route("/book",  methods=["GET"])
 def get_book_list():
     books = Book.query.filter_by().all()
@@ -114,9 +118,12 @@ def get_book_list():
 
     return {"data": results}
 
+@jwt_required()
 @app.route("/book/<int:id>",  methods=["GET"])
 def get_book_by_id(id):
     book = Book.query.get(id)
+    if not book:
+        return {"Status": "Error", "message": "Book not found"}, 404
     return {"id": book.id, "name": book.name, "published_date": book.published_date, "author": book.author}
 
 
@@ -124,8 +131,9 @@ def get_book_by_id(id):
 @jwt_required()
 def add_note(book_id):
     book = Book.query.get(book_id)
+    
     if not book:
-        return {"status": "Error"}, 401
+        return {"status": "Error", "message": "Book not found"}, 401
 
     params = request.json
     note = Notes(note=params["note"], book=book_id, created_by=current_identity.id)
@@ -133,7 +141,7 @@ def add_note(book_id):
     db.session.commit()
     return {"id": note.id, "note": note.note, "created_at": note.created_at, "created_by": note.created_by}
     
-
+@jwt_required()
 @app.route("/book/<int:book_id>/note", methods=["GET"])
 def get_all_notes(book_id):
     notes = Notes.query.filter_by(book=book_id).all()
@@ -144,12 +152,15 @@ def get_all_notes(book_id):
 
     return {"data": results}
 
+
+@jwt_required()
 @app.route("/book/<int:book_id>/note/<int:note_id>", methods=["GET"])
 def get_note_by_id(book_id, note_id):
     note = Notes.query.get(note_id)
     return {"id": note.id, "note": note.note, "created_at": note.created_at}
     
 
+@jwt_required()
 @app.route("/author", methods=["POST"])
 def add_author():
     # name, author, pages
@@ -159,6 +170,8 @@ def add_author():
     db.session.commit()
     return {"id": author.id, "name": author.author_name, "bio": author.author_bio}
 
+
+@jwt_required()
 @app.route("/category", methods=["POST"])
 def add_category():
     # name, author, pages
@@ -169,6 +182,7 @@ def add_category():
     return {"id": category.id, "name": category.name}
 
 
+@jwt_required()
 @app.route("/author",  methods=["GET"])
 def get_author_list():
     authors = Author.query.filter_by().all()
@@ -179,6 +193,8 @@ def get_author_list():
 
     return {"data": results}
 
+
+@jwt_required()
 @app.route("/category",  methods=["GET"])
 def get_category_list():
     categories = Category.query.filter_by().all()
